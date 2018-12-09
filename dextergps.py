@@ -177,35 +177,33 @@ class GROVEGPS():
 
 if __name__ =="__main__":
     gps = GROVEGPS()
-    latest_distance = 0 # Keep track of last recorded distance to calculate speed
     speed = 0
 
     read_interval = 0.1
     # Sample data
-    coordinates1 = {'lat': 1.346316, 'lon': 103.931746}
-    coordinates2 = {'lat': 1.357679, 'lon': 103.972348}
+    coordinates = {'lat': 1.346316, 'lon': 103.931746}
     while True:
         time.sleep(read_interval)
         in_data = gps.read()
         lat = 0
         lon = 0
+        # Keep track of previous coordinates
+        old_coords = {'lat': coordinates['lat'], 'lon': coordinates['lon']}
         if in_data != []:
             lat = in_data[0]
             lon = in_data[1]
             print (in_data)
-            
+        
+        # Hard-coded location update
+        coordinates['lat'] += 0.003
+        coordinates['lon'] += 0.003
+        new_coords = {'lat': coordinates['lat'], 'lon': coordinates['lon']}
+        
+        # My own shit
+        distance = calc_distance(old_coords['lat'], old_coords['lon'], new_coords['lat'], new_coords['lon'])
 
         print('Speed: {}'.format(speed))
-
-        # My own shit
-        distance = calc_distance(coordinates1['lat'], coordinates1['lon'], coordinates2['lat'], coordinates2['lon'])
 
         # Distance is in metres. Convert to KM
         distance /= 1000 # KM
         speed = distance / (read_interval / 3600)
-
-        # Hard-coded location update
-        coordinates1['lat'] += 0.003
-        coordinates1['lon'] += 0.003
-        coordinates2['lat'] += 0.003
-        coordinates2['lon'] += 0.003
