@@ -177,33 +177,37 @@ class GROVEGPS():
 
 if __name__ =="__main__":
     gps = GROVEGPS()
-    speed = 0
+    read_interval = 0.2
 
-    read_interval = 0.1
-    # Sample data
-    coordinates = {'lat': 1.346316, 'lon': 103.931746}
+    # Get current location
+    in_data = gps.read()
+    latest_coords = 0 # Retarded initializer
+    if in_data != []:
+        lat = in_data[0]
+        lon = in_data[1]
+        latest_coords = {'lat': lat, 'lon': lon}
+
     while True:
         time.sleep(read_interval)
         in_data = gps.read()
         lat = 0
         lon = 0
-        # Keep track of previous coordinates
-        old_coords = {'lat': coordinates['lat'], 'lon': coordinates['lon']}
+        new_coords = 0
         if in_data != []:
             lat = in_data[0]
             lon = in_data[1]
-            print (in_data)
-        
-        # Hard-coded location update
-        coordinates['lat'] += 0.003
-        coordinates['lon'] += 0.003
-        new_coords = {'lat': coordinates['lat'], 'lon': coordinates['lon']}
+            new_coords = {'lat': lat, 'lon': lon}
+            # print (in_data)
         
         # My own shit
-        distance = calc_distance(old_coords['lat'], old_coords['lon'], new_coords['lat'], new_coords['lon'])
+        if latest_coords != 0 and new_coords != 0:
+            distance = calc_distance(latest_coords['lat'], latest_coords['lon'], new_coords['lat'], new_coords['lon'])
 
-        print('Speed: {}'.format(speed))
+            # Distance is in metres. Convert to KM
+            distance /= 1000 # KM
+            speed = distance / (read_interval / 3600)
 
-        # Distance is in metres. Convert to KM
-        distance /= 1000 # KM
-        speed = distance / (read_interval / 3600)
+            print('Speed: {}'.format(speed))
+
+            # Keep track of latest location
+            latest_coords = new_coords
