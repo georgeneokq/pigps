@@ -4,6 +4,23 @@
 import grovepi
 import serial, time, sys
 import re
+import math
+
+# Return distance between two points in metres
+def calc_distance(lat1, lon1, lat2, lon2):
+    R = 6371e3
+    lat1_radians = math.radians(lat1)
+    lat2_radians = math.radians(lat2)
+    latDiff_radians = math.radians(lat2 - lat1)
+    lonDiff_radians = math.radians(lon2 - lon1)
+
+    a = math.sin(latDiff_radians / 2) * math.sin(latDiff_radians / 2) + math.cos(lat1_radians) * math.cos(lat2_radians) * math.sin(lonDiff_radians / 2) * math.sin(lonDiff_radians / 2)
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    # Distance in metres
+    return R * c
+
 
 en_debug = False
 
@@ -93,7 +110,8 @@ class GROVEGPS():
                 break
 
         if valid:
-            return self.gga[2],self.gga[3],self.gga[4],self.gga[5]
+            return self.gga[2],self.gga[4]
+            # return self.gga[2],self.gga[3],self.gga[4],self.gga[5]
         else:
             self.clean_data()
             return []
@@ -157,11 +175,37 @@ class GROVEGPS():
 
         return True
 
-
 if __name__ =="__main__":
     gps = GROVEGPS()
+    latest_distance = 0 # Keep track of last recorded distance to calculate speed
+    speed = 0
+
+    read_interval = 0.1
+    # Sample data
+    coordinates1 = {'lat': 1.346316, 'lon': 103.931746}
+    coordinates2 = {'lat': 1.357679, 'lon': 103.972348}
     while True:
-        time.sleep(0)
+        time.sleep(read_interval)
         in_data = gps.read()
+        lat = 0
+        lon = 0
         if in_data != []:
+            lat = in_data[0]
+            lon = in_data[1]
             print (in_data)
+            
+
+        print('Speed: {}'.format(speed))
+
+        # My own shit
+        distance = calc_distance(coordinates1['lat'], coordinates1['lon'], coordinates2['lat'], coordinates2['lon'])
+
+        # Distance is in metres. Convert to KM
+        distance /= 1000 # KM
+        speed = distance / (read_interval / 3600)
+
+        # Hard-coded location update
+        coordinates1['lat'] += 0.003
+        coordinates1['lon'] += 0.003
+        coordinates2['lat'] += 0.003
+        coordinates2['lon'] += 0.003
